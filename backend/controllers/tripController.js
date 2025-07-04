@@ -1,22 +1,30 @@
-import Trip from '../models/Trip.js';
+const Trip = require('../models/Trip');
 
-export const createTrip = async (req, res) => {
+const createTrip = async (req, res) => {
   const trip = new Trip({ ...req.body, userId: req.userId });
   await trip.save();
   res.status(201).json(trip);
 };
 
-export const getTrips = async (req, res) => {
+const getTrips = async (req, res) => {
   const trips = await Trip.find({ userId: req.userId });
-  res.json(trips);
+  res.status(200).json(trips);
 };
 
-export const updateTrip = async (req, res) => {
-  const trip = await Trip.findOneAndUpdate({ _id: req.params.id, userId: req.userId }, req.body, { new: true });
-  res.json(trip);
+const updateTrip = async (req, res) => {
+  const trip = await Trip.findOneAndUpdate(
+    { _id: req.params.id, userId: req.userId },
+    req.body,
+    { new: true }
+  );
+  if (!trip) return res.status(404).json({ error: 'Trip not found' });
+  res.status(200).json(trip);
 };
 
-export const deleteTrip = async (req, res) => {
-  await Trip.deleteOne({ _id: req.params.id, userId: req.userId });
-  res.json({ message: 'Trip deleted' });
+const deleteTrip = async (req, res) => {
+  const result = await Trip.deleteOne({ _id: req.params.id, userId: req.userId });
+  if (!result.deletedCount) return res.status(404).json({ error: 'Trip not found' });
+  res.status(200).json({ message: 'Trip deleted' });
 };
+
+module.exports = { createTrip, getTrips, updateTrip, deleteTrip };
