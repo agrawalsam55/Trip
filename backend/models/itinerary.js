@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+const mongoose = require('mongoose');
 
 const itinerarySchema = new mongoose.Schema({
   tripId: { type: mongoose.Schema.Types.ObjectId, ref: 'Trip' },
@@ -8,4 +8,4 @@ const itinerarySchema = new mongoose.Schema({
   location: String
 });
 
-export default mongoose.model('Itinerary', itinerarySchema);
+module.exports = mongoose.model('Itinerary', itinerarySchema);
