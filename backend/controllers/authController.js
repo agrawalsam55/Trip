@@ -1,22 +1,46 @@
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
-import User from '../models/User.js';
-import { jwtSecret } from '../config.js';
+const { validationResult } = require("express-validator");
+const userModel = require('../models/User');
+const userService = require('../services/userService');
+const blackListTokenModel = require('../models/blacklistToken');
 
-export const signup = async (req, res) => {
-  const { name, email, password } = req.body;
-  const hashed = await bcrypt.hash(password, 10);
-  const user = new User({ name, email, password: hashed });
-  await user.save();
-  res.status(201).json({ message: 'User registered' });
+const registerUser = async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
+
+  const { fullname, email, password } = req.body;
+  const existingUser = await userModel.findOne({ email });
+  if (existingUser) return res.status(400).json({ message: 'User already exists' });
+
+  const hashedPassword = await userModel.hashedPassword(password);
+
+  const user = await userService.createUser({
+    firstname: fullname.firstname,
+    lastname: fullname.lastname,
+    email,
+    password: hashedPassword
+  });
+
+  const token = user.generateAuthToken();
+  res.status(201).json({ token, user });
 };
 
-export const login = async (req, res) => {
+const loginUser = async (req, res) => {
   const { email, password } = req.body;
-  const user = await User.findOne({ email });
-  if (!user || !(await bcrypt.compare(password, user.password)))
-    return res.status(401).json({ message: 'Invalid credentials' });
+  const user = await userModel.findOne({ email }).select('+password');
+  if (!user || !(await user.comparePassword(password))) {
+    return res.status(400).json({ message: 'Invalid Email or Password' });
+  }
 
-  const token = jwt.sign({ id: user._id }, jwtSecret, { expiresIn: '1d' });
-  res.json({ token });
+  const token = user.generateAuthToken();
+  res.cookie('token', token);
+  res.status(200).json({ token, user });
 };
+
+const logoutUser = async (req, res) => {
+  const token = req.cookies?.token || req.headers.authorization?.split(' ')[1];
+  if (token) await blackListTokenModel.create({ token });
+  res.clearCookie('token');
+  res.status(200).json({ message: 'Logged out successfully' });
+};
+
+module.exports = { registerUser, loginUser, logoutUser };
