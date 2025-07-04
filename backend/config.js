@@ -1,5 +1,6 @@
-import dotenv from 'dotenv';
-dotenv.config();
+require('dotenv').config();
 
-export const jwtSecret = process.env.JWT_SECRET;
-export const mongoURI = process.env.MONGO_URI;
+const jwtSecret = process.env.JWT_SECRET;
+const mongoURI = process.env.MONGO_URI;
+
+module.exports = { jwtSecret, mongoURI };
