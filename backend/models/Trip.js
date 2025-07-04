@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+const mongoose = require('mongoose');
 
 const tripSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
@@ -8,4 +8,4 @@ const tripSchema = new mongoose.Schema({
   endDate: Date
 });
 
-export default mongoose.model('Trip', tripSchema);
+module.exports = mongoose.model('Trip', tripSchema);
